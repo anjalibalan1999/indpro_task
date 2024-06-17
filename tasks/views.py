@@ -1,4 +1,4 @@
-from .models import User, Order, Post, Comment
+from .models import User, Order, Post, Comment, Product
 from .utils import create_post, add_comment_to_post, fetch_comments_for_post
 from .utils import add_product, update_product_quantity, calculate_total_inventory_value
 from .utils import create_order, add_item_to_order, calculate_order_total
@@ -132,15 +132,11 @@ def create_order_view(request):
             user_id = data.get('user_id')
             user = get_object_or_404(User, id=user_id)
             order = create_order(user)
-            return JsonResponse({'order_id': order.id, 'total_price': order.total_price})
+            return JsonResponse({'order_id': order.id, 'total_price': float(order.total_price)})
         except json.JSONDecodeError:
             return JsonResponse({'error': 'Invalid JSON'}, status=400)
-        except User.DoesNotExist:
-            return JsonResponse({'error': 'User not found'}, status=404)
     else:
         return HttpResponseNotAllowed(['POST'])
-    
-
 
 @csrf_exempt
 def add_item_to_order_view(request, order_id):
@@ -149,14 +145,13 @@ def add_item_to_order_view(request, order_id):
             data = json.loads(request.body)
             product_id = data.get('product_id')
             quantity = data.get('quantity')
-            price = data.get('price')
             order = get_object_or_404(Order, id=order_id)
-            item = add_item_to_order(order, product_id, quantity, price)
-            return JsonResponse({'order_id': order.id, 'item_id': item.id})
+            item = add_item_to_order(order, product_id, quantity)
+            return JsonResponse({'order_id': order.id, 'item_id': item.id, 'total_price': float(order.total_price)})
         except json.JSONDecodeError:
             return JsonResponse({'error': 'Invalid JSON'}, status=400)
-        except Order.DoesNotExist:
-            return JsonResponse({'error': 'Order not found'}, status=404)
+        except Product.DoesNotExist:
+            return JsonResponse({'error': 'Product not found'}, status=404)
     else:
         return HttpResponseNotAllowed(['POST'])
 
@@ -164,7 +159,7 @@ def get_order_total_view(request, order_id):
     if request.method == 'GET':
         try:
             total_price = calculate_order_total(order_id)
-            return JsonResponse({'order_id': order_id, 'total_price': total_price})
+            return JsonResponse({'order_id': order_id, 'total_price': float(total_price)})
         except Order.DoesNotExist:
             return JsonResponse({'error': 'Order not found'}, status=404)
     else:

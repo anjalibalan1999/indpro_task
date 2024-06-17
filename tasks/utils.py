@@ -51,22 +51,21 @@ def calculate_total_inventory_value():
 # **************  function for odering system  *****************
 
 def create_order(user):
-    order = Order.objects.create(user=user, total_price = 0)
+    order = Order.objects.create(user=user)
     return order
-    # eg:  {  "user_id": 1  }
 
-def add_item_to_order(order, product_id, quantity, price):
-    item = OrderItem.objects.create(order=order, product_id=product_id, quantity=quantity, price=price)
-    order.total_price += Decimal(item.price) * Decimal(item.quantity)
+def add_item_to_order(order, product_id, quantity):
+    product = Product.objects.get(id=product_id)
+    item = OrderItem.objects.create(order=order, product=product, quantity=quantity, price=product.price * quantity)
+    order.total_price += item.price
     order.save()
     return item
-    
-    # { "product_id": 1,"quantity": 2,"price": 50.25 }
+#    ot = {"product_id": 1,"quantity": 2}
+
 
 def calculate_order_total(order_id):
     order = Order.objects.get(id=order_id)
     return order.total_price
-    # total price = q * p
 
 
 # ***** blog platform *****
